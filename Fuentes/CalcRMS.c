@@ -1,7 +1,9 @@
 #include "xparameters.h"
 #include "xil_io.h"
-#include "sum_ip.h"
-#inlcude <stdio.h>
+#include "FilAVG.h"
+#include <stdio.h>
+#include <stdint.h>
+#include "sleep.h"
  
 
 // clk     => S_AXI_ACLK,
@@ -10,65 +12,73 @@
 //             ena     => slv_reg3(0),
 //             sigin   => slv_reg1(15 downto 0),
 //             sigout  => salFil(15 downto 0)
-typedef union Bits_t{
+
+typedef union {
     struct {
         uint8_t b0:1;
         uint8_t b1:1;
-        uint32_t baux:30
-    }
+        uint32_t baux:30;
+    };
     struct {
-        uint32_t bitsData:32
-    }
-};
+        uint32_t bitsData:32;
+    };
+} Bits_t;
 
-typedef union Signal_t{
+typedef union {
     struct {
         uint16_t signal:16;
-        uint16_t sigaux:16
-    }
+        uint16_t sigaux:16;
+    };
     struct {
-        uint32_t signalData:32
-    }
-};
+        uint32_t signalData:32;
+    };
+} Signal_t;
 
 //tabla datos de señal senoidal
-uint16_t seno16 [16] = {0x0000,0x33a8,0x5f73,0x7cb6,0x86fd,0x7cb6,0x5f73,0x33a8,0x0000,0x33a8,0x5f73,0x7cb6,0x86fd,0x7cb6,0x5f73,0x33a8}
+uint16_t seno16[] = {0x0000,0x33a8,0x5f73,0x7cb6,0x86fd,0x7cb6,0x5f73,0x33a8,0x0000,0x33a8,0x5f73,0x7cb6,0x86fd,0x7cb6,0x5f73,0x33a8};
 
 //valor de entrada para múltiplicar la señal
 uint8_t valor = 1;
 
+    Bits_t reset_data = {.bitsData=0};
+    Bits_t enable_data = {.bitsData=0};
+    Signal_t input_data = {.signalData=0};
+    Signal_t output_data = {.signalData=0};
+
 int main (void) {
 
-    //variables
-    Bits_t reset_data;
-    reset_data.bitsData = 0;
+	uint8_t i = 0;
 
-    Bits_t enable_data;
-    enable_data.bitsData = 0;
-
-    Signal_t input_data;
-    input_data.signalData = 0;
-
-    Signal_t output_data;
-    output_data.signalData = 0;
-
-    xil_printf("-- Inicio del programa para validar el uso de IP cores propios --\r\n");
+    xil_printf("-- Inicio del programa.... --\r\n");
     valor = inbyte();
     xil_printf("Valor ingresado: %d\r\n", valor);
+
 
     while(1){
         //setear enable
         enable_data.b0 = 1;
-        SUM_IP_mWriteReg(XPAR_SUM_IP_S_AXI_BASEADDR, SUM_IP_S_AXI_SLV_REG0_OFFSET, enable_data.bitsData);
+        FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG3_OFFSET, enable_data.bitsData);
+
         //enviar un dato
-        //aumentar el indice
+        input_data.signal = seno16[i];
+        FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG1_OFFSET, input_data.signalData);
+
+        usleep(5000);
+
         //borrar enable
+        enable_data.b0 = 0;
+        FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG3_OFFSET, enable_data.bitsData);
+
+        i = (i + 1) % 16;
+
+        //sacar dato
+        uint32_t res = FILAVG_mReadReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG2_OFFSET);
+        xil_printf("Valor RMS de senial: %d\r\n", res);
+
+        sleep(1);
+
     }
     
-    SUM_IP_mWriteReg(XPAR_SUM_IP_S_AXI_BASEADDR, SUM_IP_S_AXI_SLV_REG0_OFFSET, opA);
-    SUM_IP_mWriteReg(XPAR_SUM_IP_S_AXI_BASEADDR, SUM_IP_S_AXI_SLV_REG1_OFFSET, opB);
-    res = SUM_IP_mReadReg(XPAR_SUM_IP_S_AXI_BASEADDR, SUM_IP_S_AXI_SLV_REG2_OFFSET);
 
-    xil_printf("Cuenta: %d + %d = %d\r\n", opA, opB, res);
 
 }
