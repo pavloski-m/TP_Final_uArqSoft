@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include "sleep.h"
  
-
 // clk     => S_AXI_ACLK,
 //             a_rst   => slv_reg0(0),
 //             s_rst   => slv_reg0(1),
@@ -50,9 +49,10 @@ int main (void) {
 	uint8_t i = 0;
 	uint8_t count = 20;
 	float mul = 1;
+	float tension = 220.0;
 
     xil_printf("-- Inicio del programa.... --\r\n");
-    xil_printf("-- Para señal de voltaje 220V presione A \r\n-- Para voltaje 110V presione L \r\n");
+    xil_printf("-- Para voltaje 220V presione A \r\n-- Para voltaje 110V presione otro \r\n");
     valor = inbyte();
 
     if(valor=='a'){
@@ -61,7 +61,7 @@ int main (void) {
     else {mul=0.5;
     }
 
-    xil_printf("Valor ingresado: %d V\r\n", (uint16_t)mul*220);
+    xil_printf("Valor ingresado: %d V\r\n", (uint16_t)(mul*tension));
 
     FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG0_OFFSET, reset_data.bitsData);
     FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG3_OFFSET, enable_data.bitsData);
@@ -73,7 +73,7 @@ int main (void) {
         FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG3_OFFSET, enable_data.bitsData);
 
         //enviar un dato
-        input_data.signal = (uint16_t)mul*seno16[i];
+        input_data.signal = (uint16_t)(mul*seno16[i]);
         FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG1_OFFSET, input_data.signalData);
 
         //sacar dato
@@ -94,7 +94,7 @@ int main (void) {
         	usleep(5000);
         	reset_data.b0 = 0;
         	FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG0_OFFSET, reset_data.bitsData);
-        	xil_printf("Reset...");
+        	xil_printf("Reset...\r\n");
         }
 
         sleep(1);
