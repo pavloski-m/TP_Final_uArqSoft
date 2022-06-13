@@ -34,7 +34,7 @@ typedef union {
 } Signal_t;
 
 //tabla datos de señal senoidal rectificada
-uint16_t seno16[] = {0x0000,0x33a8,0x5f73,0x7cb6,0x86fd,0x7cb6,0x5f73,0x33a8,0x0000,0x33a8,0x5f73,0x7cb6,0x86fd,0x7cb6,0x5f73,0x33a8};
+uint16_t seno16[] = {0x0000 ,0x348e ,0x611b ,0x7ee0 ,0x8955 ,0x7ee0 ,0x611b ,0x348e ,0x0000 ,0x348e ,0x611b ,0x7ee0 ,0x8955 ,0x7ee0 ,0x611b ,0x348e};
 
 //valor de entrada para múltiplicar la señal
 uint8_t valor = 1;
@@ -48,20 +48,20 @@ int main (void) {
 
 	uint8_t i = 0;
 	uint8_t count = 20;
-	float mul = 1;
-	float tension = 220.0;
+	uint8_t div = 1;
+	uint8_t tension = 220;
 
     xil_printf("-- Inicio del programa.... --\r\n");
     xil_printf("-- Para voltaje 220V presione A \r\n-- Para voltaje 110V presione otro \r\n");
     valor = inbyte();
 
     if(valor=='a'){
-    	mul=1;
+    	div=1;
     }
-    else {mul=0.5;
+    else {div=2;
     }
 
-    xil_printf("Valor ingresado: %d V\r\n", (uint16_t)(mul*tension));
+    xil_printf("Valor ingresado: %d V\r\n", (uint16_t)(tension/div));
 
     FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG0_OFFSET, reset_data.bitsData);
     FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG3_OFFSET, enable_data.bitsData);
@@ -73,7 +73,7 @@ int main (void) {
         FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG3_OFFSET, enable_data.bitsData);
 
         //enviar un dato
-        input_data.signal = (uint16_t)(mul*seno16[i]);
+        input_data.signal = (uint16_t)(seno16[i]/div);
         FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG1_OFFSET, input_data.signalData);
 
         //sacar dato
