@@ -86,10 +86,12 @@ int main (void) {
 
         i = (i + 1) % 16;
 
+        //reset cada 20 muestras
         count--;
         if(count==0){
         	count = 20;
         	reset_data.b0 = 1;
+            
         	FILAVG_mWriteReg(XPAR_FILAVG_0_S_AXI_BASEADDR, FILAVG_S_AXI_SLV_REG0_OFFSET, reset_data.bitsData);
         	usleep(5000);
         	reset_data.b0 = 0;
